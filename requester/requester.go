@@ -18,12 +18,15 @@ package requester
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -33,6 +36,7 @@ import (
 // Max size of the buffer of result channel.
 const maxResult = 1000000
 const maxIdleConn = 500
+const MillisecondsInDuration = 1000 * time.Millisecond // Constant representing milliseconds
 
 type result struct {
 	err           error
@@ -88,6 +92,9 @@ type Work struct {
 	// ProxyAddr is the address of HTTP proxy server in the format on "host:port".
 	// Optional.
 	ProxyAddr *url.URL
+
+	// EnableFuncDuration is an option to report only function execution time return in the response body
+	EnableFuncDuration bool
 
 	// Writer is where results will be written. If nil, results are written to stdout.
 	Writer io.Writer
@@ -183,15 +190,33 @@ func (b *Work) makeRequest(c *http.Client) {
 	}
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 	resp, err := c.Do(req)
+	var funcDuration int
 	if err == nil {
 		size = resp.ContentLength
 		code = resp.StatusCode
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
+		//io.Copy(ioutil.Discard, resp.Body)
+		defer resp.Body.Close()
+
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+			fmt.Printf("Can't read resp body error: %v\n", err)
+			return
+		}
+		//fmt.Printf("duration body is: %s\n", string(b))
+		funcDuration, err = strconv.Atoi(string(b))
+		if err != nil {
+			fmt.Printf("Can't convert string to int error: %v\n", err)
+			return
+		}
 	}
 	t := now()
 	resDuration = t - resStart
 	finish := t - s
+	if b.EnableFuncDuration {
+		finish = time.Duration(funcDuration) * MillisecondsInDuration
+	}
+
 	b.results <- &result{
 		offset:        s,
 		statusCode:    code,

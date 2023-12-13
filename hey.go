@@ -64,6 +64,7 @@ var (
 	disableKeepAlives  = flag.Bool("disable-keepalive", false, "")
 	disableRedirects   = flag.Bool("disable-redirects", false, "")
 	proxyAddr          = flag.String("x", "", "")
+	enableFuncDuration = flag.Bool("enable-funcDuration", false, "")
 )
 
 var usage = `Usage: hey [options...] <url>
@@ -101,6 +102,7 @@ Options:
   -disable-redirects    Disable following of HTTP redirects
   -cpus                 Number of used cpu cores.
                         (default for current machine is %d cores)
+  -enable-funcDuration  Enable only report function execution duration returned by response 
 `
 
 func main() {
@@ -234,6 +236,7 @@ func main() {
 		H2:                 *h2,
 		ProxyAddr:          proxyURL,
 		Output:             *output,
+		EnableFuncDuration: *enableFuncDuration,
 	}
 	w.Init()
 
