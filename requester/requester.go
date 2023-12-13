@@ -36,7 +36,7 @@ import (
 // Max size of the buffer of result channel.
 const maxResult = 1000000
 const maxIdleConn = 500
-const MillisecondsInDuration = 1000 * time.Millisecond // Constant representing milliseconds
+const MillisecondsInDuration = time.Millisecond // Constant representing milliseconds
 
 type result struct {
 	err           error
