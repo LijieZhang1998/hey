@@ -200,10 +200,12 @@ func (b *Work) makeRequest(c *http.Client) {
 
 		b, err := io.ReadAll(resp.Body)
 		if err == nil {
-			//fmt.Printf("duration body is: %s\n", string(b))
 			funcDuration, err = strconv.Atoi(string(b))
 			if err != nil {
-				fmt.Printf("Can't convert string to int error: %v\n", err)
+				//fmt.Printf("Can't convert string to int error: %v\n", err)
+				if code == 429 {
+					return
+				}
 			}
 		} else {
 			log.Fatalln(err)
@@ -215,7 +217,7 @@ func (b *Work) makeRequest(c *http.Client) {
 	resDuration = t - resStart
 	finish := t - s
 	if b.EnableFuncDuration && durationErr == nil {
-		finish = time.Duration(funcDuration) * MillisecondsInDuration
+		finish = time.Duration(funcDuration) * time.Nanosecond
 	}
 
 	b.results <- &result{
