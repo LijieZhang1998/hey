@@ -215,7 +215,7 @@ func (b *Work) makeRequest(c *http.Client) {
 	resDuration = t - resStart
 	finish := t - s
 	if b.EnableFuncDuration && durationErr == nil {
-		finish = time.Duration(funcDuration) * MillisecondsInDuration
+		finish = time.Duration(funcDuration) * time.Nanosecond
 	}
 
 	b.results <- &result{
