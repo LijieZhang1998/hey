@@ -191,6 +191,7 @@ func (b *Work) makeRequest(c *http.Client) {
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 	resp, err := c.Do(req)
 	var funcDuration int
+	var durationErr error
 	if err == nil {
 		size = resp.ContentLength
 		code = resp.StatusCode
@@ -198,22 +199,22 @@ func (b *Work) makeRequest(c *http.Client) {
 		defer resp.Body.Close()
 
 		b, err := io.ReadAll(resp.Body)
-		if err != nil {
+		if err == nil {
+			//fmt.Printf("duration body is: %s\n", string(b))
+			funcDuration, err = strconv.Atoi(string(b))
+			if err != nil {
+				fmt.Printf("Can't convert string to int error: %v\n", err)
+			}
+		} else {
 			log.Fatalln(err)
 			fmt.Printf("Can't read resp body error: %v\n", err)
-			return
 		}
-		//fmt.Printf("duration body is: %s\n", string(b))
-		funcDuration, err = strconv.Atoi(string(b))
-		if err != nil {
-			fmt.Printf("Can't convert string to int error: %v\n", err)
-			return
-		}
+		durationErr = err
 	}
 	t := now()
 	resDuration = t - resStart
 	finish := t - s
-	if b.EnableFuncDuration {
+	if b.EnableFuncDuration && durationErr == nil {
 		finish = time.Duration(funcDuration) * MillisecondsInDuration
 	}
 
